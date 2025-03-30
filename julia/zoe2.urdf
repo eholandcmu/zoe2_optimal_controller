@@ -46,7 +46,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="/home/hayden/cmu/courses/16745_OCRL/Project/meshes/chassis.obj"/>
+        <mesh filename="meshes/chassis.obj"/>
       </geometry>
       <material name="">
         <color rgba="0.866666666666667 0.909803921568627 1 1"/>
@@ -70,7 +70,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="/home/hayden/cmu/courses/16745_OCRL/Project/meshes/back_hinge.obj"/>
+        <mesh filename="meshes/back_hinge.obj"/>
       </geometry>
       <material name="">
         <color rgba="0.866666666666667 0.909803921568627 1 1"/>
@@ -94,7 +94,7 @@
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="/home/hayden/cmu/courses/16745_OCRL/Project/meshes/wheel_back_right.obj"/>
+        <mesh filename="meshes/wheel_back_right.obj"/>
       </geometry>
       <material name="">
         <color rgba="0.294117647058824 0.294117647058824 0.294117647058824 1"/>
@@ -118,7 +118,7 @@
     <visual>
       <origin rpy="0 0 -1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="/home/hayden/cmu/courses/16745_OCRL/Project/meshes/wheel_back_right.obj"/>
+        <mesh filename="meshes/wheel_back_right.obj"/>
       </geometry>
       <material name="">
         <color rgba="0.294117647058824 0.294117647058824 0.294117647058824 1"/>
@@ -142,7 +142,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.075"/>
       <geometry>
-        <mesh filename="/home/hayden/cmu/courses/16745_OCRL/Project/meshes/front_axle.obj"/>
+        <mesh filename="meshes/front_axle.obj"/>
       </geometry>
       <material name="">
         <color rgba="0.529411764705882 0.549019607843137 0.549019607843137 1"/>
@@ -166,7 +166,7 @@
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="/home/hayden/cmu/courses/16745_OCRL/Project/meshes/wheel_back_right.obj"/>
+        <mesh filename="meshes/wheel_back_right.obj"/>
       </geometry>
       <material name="">
         <color rgba="0.294117647058824 0.294117647058824 0.294117647058824 1"/>
@@ -190,7 +190,7 @@
     <visual>
       <origin rpy="0 0 -1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="/home/hayden/cmu/courses/16745_OCRL/Project/meshes/wheel_back_right.obj"/>
+        <mesh filename="meshes/wheel_back_right.obj"/>
       </geometry>
       <material name="">
         <color rgba="0.294117647058824 0.294117647058824 0.294117647058824 1"/>
@@ -214,7 +214,7 @@
     <visual>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 -0.075"/>
       <geometry>
-        <mesh filename="/home/hayden/cmu/courses/16745_OCRL/Project/meshes/front_axle.obj"/>
+        <mesh filename="meshes/front_axle.obj"/>
       </geometry>
       <material name="">
         <color rgba="0.529411764705882 0.549019607843137 0.549019607843137 1"/>
@@ -238,7 +238,7 @@
     <visual>
       <origin rpy="-1.5707963267948966 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="/home/hayden/cmu/courses/16745_OCRL/Project/meshes/back_hinge.obj"/>
+        <mesh filename="meshes/back_hinge.obj"/>
       </geometry>
       <material name="">
         <color rgba="0.866666666666667 0.909803921568627 1 1"/>
