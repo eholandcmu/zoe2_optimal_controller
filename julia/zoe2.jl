@@ -194,6 +194,10 @@ function zoe2_dynamics(model::NamedTuple, x, u; debug=false)
     return x_dot
 end
 
+function zero_torque!(torques::AbstractVector, t, state::MechanismState)
+    torques .= 0
+end
+
 function animate_zoe2(Xsim, dt)
     """
     Animate the rover along the trajectory defined by Xsim.
@@ -216,51 +220,61 @@ function animate_zoe2(Xsim, dt)
     
     # Create a mechanism visualizer to visualize the robot
     mvis = MechanismVisualizer(robot_obj, URDFVisuals(urdf_path), vis[:robot])
+
+    # Create and set the initial state (all zeros)
+    init_state = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    set_configuration!(mvis, init_state)
+
+    # Create the state (with a little motion) including the velocity
+    # (have to give a little so that the robot keeps updating)
+    init_velocity = [1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1e-4]
+    state = MechanismState(robot_obj, init_state, init_velocity)
+    # println("dt: ", dt)
+    # println("Xsim length: ", size(Xsim))
+
+    # Simulate the rover up to the length of Xsim with delta time dt
+    # t = collect(0:dt:(length(Xsim)-1)*dt)
+    # q = [zeros(7) for _ in 1:length(Xsim)]
+    t, q, v = simulate(state, (length(Xsim)-1) * dt, zero_torque!, Δt=dt)
+    # println("q length: ", size(q))
+    println("t length: ", length(t))
     
-    # Build the animation from the joint states
-    anim = Animation(vis, fps=floor(Int, 1/dt))
-    
-    # Set the position and orientation of the rover for each frame
+    # Overwrite the simulation with our own joint states
+    for k in 1:length(Xsim)
+        q[k][2] = Xsim[k][4]   # front axle steering
+        q[k][3] = -Xsim[k][5]  # back axle steering (flipped)
+    end
+    # println("q[1]: ", q[1])
+
+    # Create a new animation object with the time vector and joint states
+    # fps = 1 / dt
+    anim = Animation(mvis, t, q; fps=Int.(1/dt))
+
+    # Now animate the rover: update both the global transform and joint configuration per frame.
     for k = 1:length(Xsim)
         atframe(anim, k) do
-
             # Extract the state variables from the current configuration
             x_b = Xsim[k][1]
             y_b = Xsim[k][2]
             ψ   = Xsim[k][3]
             θ_f = Xsim[k][4]
             θ_r = Xsim[k][5]
-
-            # Defined z-axis rotation matrix for the rover's body
+            
+            # --- Update Global Transform ---
+            # Build a rotation about the z-axis:
             R = [ cos(ψ)  -sin(ψ)  0.0;
-                 sin(ψ)   cos(ψ)  0.0;
-                 0.0      0.0     1.0 ]
-
-            # Set the transformations for the rover's position, heading, and steering angles
+                  sin(ψ)   cos(ψ)  0.0;
+                  0.0      0.0     1.0 ]
+            # Build the translation
             T = Translation(x_b, y_b, 0.0)
+            # Compose the overall transform
             TR = compose(T, LinearMap(R))
             settransform!(vis[:robot], TR)
-
-            # Build the full 7-DOF configuration vector.
-            # Here we assume:
-            #   Joint 1 (axle_roll_back_joint): 0.0 (unused)
-            #   Joint 2 (axle_yaw_front_joint): θ_f
-            #   Joint 3 (axle_yaw_back_joint):  θ_r
-            #   Joints 4-7 (wheel joints): 0.0 (no wheel rotation simulated)
-            state = MechanismState(robot_obj)
-            q = configuration(state)
-            q[2] = θ_f  # Joint 2 (axle_yaw_front_joint)
-            q[3] = -θ_r  # Joint 3 (axle_yaw_back_joint)
-            set_configuration!(mvis, q)
-            state = MechanismState(robot_obj)
-            q = configuration(state)
-            println("Joint 2 (axle_yaw_front_joint): ", q[2])
-            println("Joint 3 (axle_yaw_back_joint): ", q[3])
         end
     end
     
     # Pass the animation to the visualizer.
-    setanimation!(vis, anim)
+    setanimation!(mvis, anim)
     
     # Render the visualizer (for example, in a Jupyter notebook).
     return render(vis)
