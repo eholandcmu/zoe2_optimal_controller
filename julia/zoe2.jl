@@ -53,12 +53,17 @@ function zoe2_dynamics(model::NamedTuple, x, u)
     # Compute the turning radius of the rover body using an average of the front and rear steering
     ϵ = 1e-6  # Small value to avoid division by zero
     R_b = L/4 * (1/(tan(θ_f) + ϵ) + 1/(tan(θ_r) + ϵ))
+    println("R_b: ", R_b)
 
     # Compute individual turning radii for each wheel using trigonometric relations
     R_fl = (L - B*sin(θ_f)) / (2*sin(θ_f) + ϵ)  # Front left wheel radius
     R_fr = (L + B*sin(θ_f)) / (2*sin(θ_f) + ϵ)  # Front right wheel radius
     R_rl = (L - B*sin(θ_r)) / (2*sin(θ_r) + ϵ)  # Rear left wheel radius
     R_rr = (L + B*sin(θ_r)) / (2*sin(θ_r) + ϵ)  # Rear right wheel radius
+    println("R_fl: ", R_fl)
+    println("R_fr: ", R_fr)
+    println("R_rl: ", R_rl)
+    println("R_rr: ", R_rr)
 
     # Compute the forward velocity v_b as an average contribution from all 4 wheels
     # Each wheel’s contribution is based on the relationship v = r*ω and the local turning radius
@@ -68,19 +73,29 @@ function zoe2_dynamics(model::NamedTuple, x, u)
         (ω_rl*sin(θ_r))/(L - B*sin(θ_r) + ϵ) +
         (ω_rr*sin(θ_r))/(L + B*sin(θ_r) + ϵ)
     )
+    println("v_b: ", v_b)
 
     # Compute the rover's heading rate
     # The heading rate is v_b divided by the body turning radius
     ψ_dot = 4*v_b / (L * (1/(tan(θ_f) + ϵ) + 1/(tan(θ_r) + ϵ)))
+    println("ψ_dot: ", ψ_dot)
 
     # Compute the steering angle rates from the difference in wheel speeds on each axle
     θ_f_dot = (r / B) * (ω_fr - ω_fl)
     θ_r_dot = (r / B) * (ω_rl - ω_rr)
+    println("θ_f_dot: ", θ_f_dot)
+    println("θ_r_dot: ", θ_r_dot)
+
+    # Compute the derivative of the rover's position (y is forward motion)
+    x_dot = v_b * sin(ψ)
+    y_dot = v_b * cos(ψ)
+    println("x_dot: ", x_dot)
+    println("y_dot: ", y_dot)
 
     # Assemble the state derivative vector
     x_dot = [
-        v_b * cos(ψ);
-        v_b * sin(ψ);
+        x_dot;
+        y_dot;
         ψ_dot;
         θ_f_dot;
         θ_r_dot;
