@@ -1,4 +1,4 @@
-function zoe2_dynamics(model::NamedTuple, x, u)
+function zoe2_dynamics(model::NamedTuple, x, u; debug=false)
     """
     Compute the dynamics of the rover using a kinematic model.
     The rover is modeled as a 4-wheeled vehicle with front and rear steering.
@@ -53,17 +53,40 @@ function zoe2_dynamics(model::NamedTuple, x, u)
     # Compute the turning radius of the rover body using an average of the front and rear steering
     ϵ = 1e-6  # Small value to avoid division by zero
     R_b = L/4 * (1/(tan(θ_f) + ϵ) + 1/(tan(θ_r) + ϵ))
-    println("R_b: ", R_b)
+    if debug
+        println("R_b: ", R_b)
+    end
+
+    ϕ_f = (π/2) - θ_f
+    ϕ_r = (π/2) - θ_r
+    R_b = L/4 * (tan(ϕ_f) + tan(ϕ_r))
+    if debug
+        println("Reparameterized R_b: ", R_b)
+    end
 
     # Compute individual turning radii for each wheel using trigonometric relations
     R_fl = (L - B*sin(θ_f)) / (2*sin(θ_f) + ϵ)  # Front left wheel radius
     R_fr = (L + B*sin(θ_f)) / (2*sin(θ_f) + ϵ)  # Front right wheel radius
     R_rl = (L - B*sin(θ_r)) / (2*sin(θ_r) + ϵ)  # Rear left wheel radius
     R_rr = (L + B*sin(θ_r)) / (2*sin(θ_r) + ϵ)  # Rear right wheel radius
-    println("R_fl: ", R_fl)
-    println("R_fr: ", R_fr)
-    println("R_rl: ", R_rl)
-    println("R_rr: ", R_rr)
+    if debug
+        println("R_fl: ", R_fl)
+        println("R_fr: ", R_fr)
+        println("R_rl: ", R_rl)
+        println("R_rr: ", R_rr)
+    end
+
+    # Compute individual turning radii for each wheel using trigonometric relations
+    R_fl = (L - B*cos(ϕ_f)) / (2*cos(ϕ_f))  # Front left wheel radius
+    R_fr = (L + B*cos(ϕ_f)) / (2*cos(ϕ_f))  # Front right wheel radius
+    R_rl = (L - B*cos(ϕ_r)) / (2*cos(ϕ_r))  # Rear left wheel radius
+    R_rr = (L + B*cos(ϕ_r)) / (2*cos(ϕ_r))  # Rear right wheel radius
+    if debug
+        println("Reparameterized R_fl: ", R_fl)
+        println("Reparameterized R_fr: ", R_fr)
+        println("Reparameterized R_rl: ", R_rl)
+        println("Reparameterized R_rr: ", R_rr)
+    end
 
     # Compute the forward velocity v_b as an average contribution from all 4 wheels
     # Each wheel’s contribution is based on the relationship v = r*ω and the local turning radius
@@ -73,24 +96,91 @@ function zoe2_dynamics(model::NamedTuple, x, u)
         (ω_rl*sin(θ_r))/(L - B*sin(θ_r) + ϵ) +
         (ω_rr*sin(θ_r))/(L + B*sin(θ_r) + ϵ)
     )
-    println("v_b: ", v_b)
+    if debug
+        println("v_b: ", v_b)
+    end
+
+    # Compute the forward velocity v_b as an average contribution from all 4 wheels
+    # Each wheel’s contribution is based on the relationship v = r*ω and the local turning radius
+    v_b = (L*r)/(8) * (tan(ϕ_f) + tan(ϕ_r)) * (
+        (ω_fl*cos(ϕ_f))/(L - B*cos(ϕ_f)) +
+        (ω_fr*cos(ϕ_f))/(L + B*cos(ϕ_f)) +
+        (ω_rl*cos(ϕ_r))/(L - B*cos(ϕ_r)) +
+        (ω_rr*cos(ϕ_r))/(L + B*cos(ϕ_r))
+    )
+    if debug
+        println("Reparameterized v_b: ", v_b)
+    end
+
 
     # Compute the rover's heading rate
     # The heading rate is v_b divided by the body turning radius
     ψ_dot = 4*v_b / (L * (1/(tan(θ_f) + ϵ) + 1/(tan(θ_r) + ϵ)))
-    println("ψ_dot: ", ψ_dot)
+    if debug
+        println("ψ_dot: ", ψ_dot)
+    end
+
+    # Compute the rover's heading rate
+    # The heading rate is v_b divided by the body turning radius
+    ψ_dot = 4*v_b / (L * (tan(ϕ_f) + tan(ϕ_r)))
+    if debug
+        println("Reparameterized ψ_dot: ", ψ_dot)
+    end
 
     # Compute the steering angle rates from the difference in wheel speeds on each axle
     θ_f_dot = (r / B) * (ω_fr - ω_fl)
     θ_r_dot = (r / B) * (ω_rl - ω_rr)
-    println("θ_f_dot: ", θ_f_dot)
-    println("θ_r_dot: ", θ_r_dot)
+    if debug
+        println("θ_f_dot: ", θ_f_dot)
+        println("θ_r_dot: ", θ_r_dot)
+    end
+
+    # Compute the steering angle rates from the difference in wheel speeds on each axle
+    ϕ_f_dot = (r / B) * (ω_fr - ω_fl)
+    ϕ_r_dot = (r / B) * (ω_rl - ω_rr)
+    if debug
+        println("Reparameterized ϕ_f_dot: ", ϕ_f_dot)
+        println("Reparameterized ϕ_r_dot: ", ϕ_r_dot)
+    end
+
+    θ_f_dot = -ϕ_f_dot
+    θ_r_dot = -ϕ_r_dot
+    if debug
+        println("Reparameterized θ_f_dot: ", θ_f_dot)
+        println("Reparameterized θ_r_dot: ", θ_r_dot)
+    end
 
     # Compute the derivative of the rover's position (y is forward motion)
-    x_dot = v_b * sin(ψ)
+    x_dot = v_b * -sin(ψ) # have to flip to get positive x on the right
     y_dot = v_b * cos(ψ)
-    println("x_dot: ", x_dot)
-    println("y_dot: ", y_dot)
+    if debug
+        println("x_dot: ", x_dot)
+        println("y_dot: ", y_dot)
+    end
+
+    # Robot Orientation:
+
+    # y |
+    #   |
+    #   |
+    #   |_______ x
+
+    #  ψ = 0                  ψ > 0
+    # |-----|                \-----\
+    #    |                       \
+    #    |                        \
+    #    |                         \
+    # |-----|                    \-----\
+
+    # Steering:
+
+    # θ_f, θ_r = 0          θ_f, θ_r > 0
+    #   |-----|               \-----\
+    #      |                     |
+    #      |                     |
+    #      |                     |
+    #   |-----|               /-----/
+
 
     # Assemble the state derivative vector
     x_dot = [
@@ -141,22 +231,15 @@ function animate_zoe2(Xsim, dt)
             θ_f = Xsim[k][4]
             θ_r = Xsim[k][5]
 
+            # Defined z-axis rotation matrix for the rover's body
+            R = [ cos(ψ)  -sin(ψ)  0.0;
+                 sin(ψ)   cos(ψ)  0.0;
+                 0.0      0.0     1.0 ]
+
             # Set the transformations for the rover's position, heading, and steering angles
             T = Translation(x_b, y_b, 0.0)
-            settransform!(vis[:robot], T)
-
-            # Handle the heading rotation
-            # The rover's heading is defined by the yaw angle ψ
-            # We need to rotate the rover's body around the Z-axis by ψ
-            # The rotation matrix for a yaw rotation is:
-            # R = [cos(ψ) -sin(ψ) 0;
-            #      sin(ψ)  cos(ψ) 0;
-            #      0        0      1]
-            # We can use the LinearMap function to create this rotation
-            # R = LinearMap([cos(ψ), -sin(ψ), 0.0;
-            #                sin(ψ),  cos(ψ), 0.0;
-            #                0.0,     0.0,    1.0])
-            # settransform!(vis[:robot], compose(T, R))
+            TR = compose(T, LinearMap(R))
+            settransform!(vis[:robot], TR)
 
             # Build the full 7-DOF configuration vector.
             # Here we assume:
@@ -164,8 +247,15 @@ function animate_zoe2(Xsim, dt)
             #   Joint 2 (axle_yaw_front_joint): θ_f
             #   Joint 3 (axle_yaw_back_joint):  θ_r
             #   Joints 4-7 (wheel joints): 0.0 (no wheel rotation simulated)
-            q = [0.0, θ_f, θ_r, 0.0, 0.0, 0.0, 0.0]
+            state = MechanismState(robot_obj)
+            q = configuration(state)
+            q[2] = θ_f  # Joint 2 (axle_yaw_front_joint)
+            q[3] = -θ_r  # Joint 3 (axle_yaw_back_joint)
             set_configuration!(mvis, q)
+            state = MechanismState(robot_obj)
+            q = configuration(state)
+            println("Joint 2 (axle_yaw_front_joint): ", q[2])
+            println("Joint 3 (axle_yaw_back_joint): ", q[3])
         end
     end
     
