@@ -21,23 +21,29 @@ def  plot_rows(points, ax):
     plt.scatter(points[:,0], points[:,1],c='red')
 
 
-def calc_spline(points, N=20, b=0, tau=0, f=1):
+def calc_spline(points, del_d=0.5, b=0, tau=0, f=1):
     virt_start = endpoint_extrapolation(points[:2,:],-f)
     virt_end = endpoint_extrapolation(points[-2:,:],f)
 
     points = np.concatenate((virt_start,points,virt_end))
 
     fullSpline = []
+    fullSplineHeadings = []
     for i in range(points.shape[0]-3):
-        splineSeg = KB_spline(points[i:i+4,:], N, b, tau)
-        fullSpline.append(splineSeg)
+        splineSeg, headingSeg = KB_spline(points[i:i+4,:], del_d, b, tau)
+        fullSpline.append(splineSeg[:-1,:]) #don't include the last points because they will be the first points in the next segment
+        fullSplineHeadings.append(headingSeg[:-1])
+        # fullSplineHeadings = [fullSplineHeadings, headingSeg]
 
-    return np.vstack(fullSpline)
+    fullSpline.append(splineSeg[-1,:]) #add the last points to the very end
+    fullSplineHeadings.append([headingSeg[-1]])
+
+    return np.vstack(fullSpline), np.concatenate(fullSplineHeadings)
         
 
 
 def endpoint_extrapolation(pts,factor=1):
-    """ Computes a vitrual point for the spline endpoints based on linear extrapolation
+    """ Computes a virtual point for the spline endpoints based on linear extrapolation
 
     Args:
         pts: numpy array of 2 points, the second of which is the endpoint
@@ -53,12 +59,13 @@ def endpoint_extrapolation(pts,factor=1):
     return np.column_stack((x,y))
 
 
-def KB_spline(pts, N=20, b=0, tau=0):
+def KB_spline(pts, del_d=0.5, b=0, tau=0):
     """ Computes the modified Kochanek–Bartels spline segment between the points. b = tau = 0 for Catmull-Rom spline
 
     Args:
         pts: numpy array of 4 points
         N: num of interpolation points of spline
+        del_d: the desired distance between spline points
         b: Kochanek–Bartels bias term
         tau: Kochanek–Bartels tension term
 
@@ -73,13 +80,34 @@ def KB_spline(pts, N=20, b=0, tau=0):
     C_x = M @ pts[:,0]
     C_y = M @ pts[:,1]
 
+    # del_d = 0.2 #m
+    N_int = 1000
+    t_int = np.linspace(0,1,N_int)
+    T_int = np.array([np.ones(N_int), 2*t_int, 3*(t_int**2)])
+    X_p = T_int.T @ C_x[1:]
+    Y_p = T_int.T @ C_y[1:]
+    L = np.trapz(np.sqrt(X_p**2+Y_p**2),t_int)
+
+    N = np.round(L/del_d).astype(int)
+
+    print(f'Segment length: {L}')
+    print(f'Num pts in Segment: {N}')
+
     t = np.linspace(0,1,N)
     T = np.array([np.ones(N), t, t**2, t**3])
     X = T.T @ C_x
     Y = T.T @ C_y
 
     CR_spline = np.column_stack((X,Y))
-    return CR_spline
+
+    T_p = np.array([np.ones(N), 2*t, 3*(t**2)])
+
+    X_p = T_p.T @ C_x[1:]
+    Y_p = T_p.T @ C_y[1:]
+
+    headings = np.arctan2(Y_p,X_p)  #*180/np.pi
+
+    return CR_spline, headings
 
 def two_pt_spline(locs,heads,f, N):
     """ Computes a cubic Hermite spline segment between 2 points given their headings
@@ -120,7 +148,7 @@ def main():
     
     points = np.array([[0,0], #starting point
                 [4, 5],
-                [0, 10],
+                # [0, 10],
                 [-4, 15],
                 [0, 20]])
     
@@ -128,16 +156,22 @@ def main():
     fig, ax = plt.subplots()
     # ax.set_xlim((-2,7))
     # ax.set_ylim((-2,10))
-    plt.axis('equal')
+    ax.axis('equal')
 
     # plot_rows(points,ax)
+    del_d = 0.25  #the desired distance between spline points.  Should be set to v_b*dt
 
-    fullSpline = calc_spline(points, 20, b=0, tau=0, f=0.5)
+    fullSpline, fullHeadings = calc_spline(points, del_d, b=0, tau=0, f=0.5)
 
     # fig, ax = plt.subplots()
     
-    plt.scatter(fullSpline[:,0], fullSpline[:,1],c='green',s=2) #intrerpolated spline points
-    plt.scatter(points[:,0], points[:,1],c='red',s=6) #waypoints
+    ax.scatter(fullSpline[:,0], fullSpline[:,1],c='green',s=2) #interpolated spline points
+    ax.scatter(points[:,0], points[:,1],c='red',s=6) #waypoints
+
+    fig,ax2 = plt.subplots()
+
+    ax2.plot(fullHeadings, marker='.')
+
     plt.show()
 
 
