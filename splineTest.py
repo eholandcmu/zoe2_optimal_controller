@@ -137,6 +137,25 @@ def two_pt_spline(locs,heads,f, N):
     spline = np.column_stack((X,Y))
     return spline
 
+def generate_trajectory(points, params):
+    
+    v_b = params["v_b"] #nominal body speed of the rover (m/s)
+    dt = params["dt"] #time step (s)
+    r = params["r"] #rover wheel radius (m)
+    
+
+    del_d = v_b*dt  #the desired distance between spline points
+
+    fullSpline, fullHeadings = calc_spline(points, del_d, b=0, tau=0, f=0.5)
+
+    N = len(fullHeadings)
+
+    Xref = [[fullSpline[i,0],fullSpline[i,1],fullHeadings[i],0,0] for i in range(N)]
+
+    Uref = [[v_b/r * np.ones(4)] for _ in range(N)]
+
+    return Xref, Uref
+
 def main():
     
     # points = np.array([[0,-1], #starting point
@@ -174,6 +193,16 @@ def main():
 
     plt.show()
 
+    #### sample usage: ####
+    # points = np.array([[0,0], #starting point
+    #         [4, 5],
+    #         [-4, 15],
+    #         [0, 20]])
+    # params = {"v_b":10,
+    #           "dt":4,
+    #           "r":.375}
+    
+    # Xref,Uref = generate_trajectory(points, params) 
 
 if __name__ == "__main__":
     main()
