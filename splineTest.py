@@ -189,6 +189,7 @@ def main():
 
     fig,ax2 = plt.subplots()
 
+    print(fullHeadings[0], fullHeadings[-1])
     ax2.plot(fullHeadings, marker='.')
 
     plt.show()
