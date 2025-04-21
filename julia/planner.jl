@@ -152,7 +152,7 @@ function main()
         [0.0, 20.0]
     ]
     del_d = 0.25
-    fullSpline, fullHeadings = calc_spline(points, del_d, 0.0, 0.0, 0.5)
+    fullSpline, fullHeadings = calc_spline(points, del_d, 0.0, 0.0, 10)
 
     # Plot spline
     scatter(fullSpline[:][1], fullSpline[:][2], markersize=2, color=:green, label="Spline")
