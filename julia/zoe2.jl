@@ -271,6 +271,7 @@ function animate_zoe2(Xsim, dt; heading_offset=π/2, Xref=nothing)
     # Create a new animation object with the time vector and joint states
     # fps = 1 / dt
     anim = MeshCat.Animation(mvis, t, q; fps=Int.(1/dt))
+    # anim = MeshCat.Animation(mvis, t, q; fps=60)
 
     # Now animate the rover: update both the global transform and joint configuration per frame.
     for k = 1:length(Xsim)
