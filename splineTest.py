@@ -21,22 +21,34 @@ def  plot_rows(points, ax):
     plt.scatter(points[:,0], points[:,1],c='red')
 
 
-def calc_spline(points, del_d=0.5, b=0, tau=0, f=1):
-    virt_start = endpoint_extrapolation(points[:2,:],-f)
-    virt_end = endpoint_extrapolation(points[-2:,:],f)
+def calc_spline(points, heads, del_d=0.5, b=0, tau=0, f=1):
+    # virt_start = endpoint_extrapolation(points[:2,:],-f)
+    # virt_end = endpoint_extrapolation(points[-2:,:],f)
 
-    points = np.concatenate((virt_start,points,virt_end))
+    # points = np.concatenate((virt_start,points,virt_end))
 
     fullSpline = []
     fullSplineHeadings = []
+
+    
+    splineSeg, headingSeg = three_pt_spline(points[:3,:], heads[0,:], True, del_d, b, tau)
+    fullSpline.append(splineSeg[:-1,:]) #don't include the last points because they will be the first points in the next segment
+    fullSplineHeadings.append(headingSeg[:-1])
+
+    print(fullSpline)
+    print(fullSplineHeadings)
+
     for i in range(points.shape[0]-3):
         splineSeg, headingSeg = KB_spline(points[i:i+4,:], del_d, b, tau)
         fullSpline.append(splineSeg[:-1,:]) #don't include the last points because they will be the first points in the next segment
         fullSplineHeadings.append(headingSeg[:-1])
         # fullSplineHeadings = [fullSplineHeadings, headingSeg]
 
-    fullSpline.append(splineSeg[-1,:]) #add the last points to the very end
-    fullSplineHeadings.append([headingSeg[-1]])
+    #this doesn't work well yet
+    splineSeg, headingSeg = three_pt_spline(points[-3:,:], heads[1,:], False, del_d, b, tau)
+
+    fullSpline.append(splineSeg) #add the last points to the very end
+    fullSplineHeadings.append(headingSeg)
 
     return np.vstack(fullSpline), np.concatenate(fullSplineHeadings)
         
@@ -137,6 +149,69 @@ def two_pt_spline(locs,heads,f, N):
     spline = np.column_stack((X,Y))
     return spline
 
+def three_pt_spline(locs, head, begin, del_d=0.5, b=0, tau=0):
+    """ Computes the modified Kochanek–Bartels spline segment between the points. b = tau = 0 for Catmull-Rom spline
+
+    Args:
+        pts: numpy array of 4 points
+        N: num of interpolation points of spline
+        del_d: the desired distance between spline points
+        b: Kochanek–Bartels bias term
+        tau: Kochanek–Bartels tension term
+        begin: boolean true if it's the first segment, false if it's the last
+
+    Returns:
+        CR_spline: 
+    """
+
+    if begin:
+        M = np.array([[0, 1, 0, 0],
+                [1, 0, 0, 0],
+                [-2, 0.5*(1-tau)*(1+b)+1, -(1-tau)*b+3, -0.5*(1-tau)*(1-b)],
+                [1 , -0.5*(1-tau)*(1+b)-2, (1-tau)*b-2, 0.5*(1-tau)*(1-b)]])
+
+        C_x = M @ np.insert(locs[:,0], 0, head[0])
+        C_y = M @ np.insert(locs[:,1], 0, head[1])
+    else:
+
+        M = np.array([[0, 1, 0, 0],
+                    [-0.5*(1-tau)*(1+b), (1-tau)*b, 0.5*(1-tau)*(1-b), 0],
+                    [(1-tau)*(1+b), -2*(1-tau)*b - 3, -(1-tau)*(1-b)+2, 1],
+                    [-0.5*(1-tau)*(1+b), (1-tau)*b + 2, 0.5*(1-tau)*(1-b)-1, 1]])
+        
+        C_x = M @ np.append(locs[:,0], head[0])
+        C_y = M @ np.append(locs[:,1], head[1])
+
+    # del_d = 0.2 #m
+    N_int = 1000
+    t_int = np.linspace(0,1,N_int)
+    T_int = np.array([np.ones(N_int), 2*t_int, 3*(t_int**2)])
+    X_p = T_int.T @ C_x[1:]
+    Y_p = T_int.T @ C_y[1:]
+    L = np.trapz(np.sqrt(X_p**2+Y_p**2),t_int)
+
+    N = np.round(L/del_d).astype(int)
+
+    print(f'End Segment length: {L}')
+    print(f'Num pts in Segment: {N}')
+
+    t = np.linspace(0,1,N)
+    T = np.array([np.ones(N), t, t**2, t**3])
+    X = T.T @ C_x
+    Y = T.T @ C_y
+
+    CR_spline = np.column_stack((X,Y))
+
+    T_p = np.array([np.ones(N), 2*t, 3*(t**2)])
+
+    X_p = T_p.T @ C_x[1:]
+    Y_p = T_p.T @ C_y[1:]
+
+    headings = np.arctan2(Y_p,X_p)  #*180/np.pi
+
+    return CR_spline, headings
+
+
 def generate_trajectory(points, params):
     
     v_b = params["v_b"] #nominal body speed of the rover (m/s)
@@ -171,6 +246,9 @@ def main():
                 [-4, 15],
                 [0, 20]])
     
+    endheadings = np.array([[0,1],
+                           [1,0]])
+    
 
     fig, ax = plt.subplots()
     # ax.set_xlim((-2,7))
@@ -180,7 +258,7 @@ def main():
     # plot_rows(points,ax)
     del_d = 0.25  #the desired distance between spline points.  Should be set to v_b*dt
 
-    fullSpline, fullHeadings = calc_spline(points, del_d, b=0, tau=0, f=0.5)
+    fullSpline, fullHeadings = calc_spline(points, endheadings, del_d, b=0, tau=0, f=0.5)
 
     # fig, ax = plt.subplots()
     
