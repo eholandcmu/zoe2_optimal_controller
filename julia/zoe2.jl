@@ -198,7 +198,7 @@ function zero_torque!(torques::AbstractVector, t, state::MechanismState)
     torques .= 0
 end
 
-function animate_zoe2(Xsim, dt)
+function animate_zoe2(Xsim, dt; heading_offset=π/2, Xref=nothing)
     """
     Animate the rover along the trajectory defined by Xsim.
     
@@ -238,6 +238,28 @@ function animate_zoe2(Xsim, dt)
     t, q, v = simulate(state, (length(Xsim)-1) * dt, zero_torque!, Δt=dt)
     # println("q length: ", size(q))
     println("t length: ", length(t))
+
+    # Add dots along the trajectory
+    for k in 1:length(Xsim)
+        pt = Xsim[k]
+        dot = Sphere(Point3f(0, 0, 0.5), 0.05)
+        node = vis[Symbol("dot_$k")]
+        mat = MeshPhongMaterial(color = RGBA(0, 0.5, 1.0, 1.0))
+        setobject!(node, dot, mat) 
+        settransform!(node, Translation(pt[1], pt[2], 0.0))
+    end
+
+    # If a reference trajectory is provided, add it to the Animation
+    if Xref !== nothing
+        for k in 1:length(Xref)
+            pt = Xref[k]
+            dot = Sphere(Point3f(0, 0, 0.5), 0.05)
+            node = vis[Symbol("dot_ref_$k")]
+            mat = MeshPhongMaterial(color = RGBA(1.0, 0.5, 0.0, 1.0))
+            setobject!(node, dot, mat) 
+            settransform!(node, Translation(pt[1], pt[2], 0.0))
+        end
+    end
     
     # Overwrite the simulation with our own joint states
     for k in 1:length(Xsim)
@@ -256,7 +278,7 @@ function animate_zoe2(Xsim, dt)
             # Extract the state variables from the current configuration
             x_b = Xsim[k][1]
             y_b = Xsim[k][2]
-            ψ   = Xsim[k][3]
+            ψ   = Xsim[k][3] - heading_offset
             θ_f = Xsim[k][4]
             θ_r = Xsim[k][5]
             
