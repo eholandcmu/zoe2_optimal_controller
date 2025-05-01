@@ -1,8 +1,10 @@
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CircleFit = "a2741ea9-3318-4d4b-8b99-ae5c58b57db7"
 ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
 CoordinateTransformations = "150eb455-5306-5404-9cee-2592286d6298"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 ECOS = "e2685f51-7e38-5353-a97d-a921fd2c8199"
 FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
