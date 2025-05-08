@@ -1,18 +1,12 @@
 from sympy import *
 
-xi, yi, ym, L, th_f, th_r, R_b = symbols('xi yi ym L th_f th_r R_b')
+xi, yi, ym, L, th_f, th_r, R_b, v_f, v_r = symbols('xi yi ym L th_f th_r R_b v_f v_r')
 pi = 3.14159
 
 
 # Define intermediate expressions
-yi_expr = (L * tan(th_r)) / (tan(th_r) + tan(th_f))
-xi_expr = (-L) / (tan(th_r) + tan(th_f))
-ym_expr = L / 2
-
-# Define the final equation using those expressions
-R_b_expr = sqrt((yi_expr - ym_expr)**2 + xi_expr**2)
-
-# Optional: simplify
-R_b_simplified = simplify(R_b_expr)
-
-pprint(R_b_simplified)
+print(sqrt(1/3))
+R_b = (L/sin(th_r+th_f))*sqrt(cos(th_r)*cos(th_f)*cos(th_f+th_r)+(1/4)*sin(th_r+th_f)**2)
+psidot = ((v_f/cos(th_r))+(v_r/cos(th_f)))*sin(th_r+th_f)/(2*L)
+v_b = R_b*psidot
+pprint(simplify(v_b))

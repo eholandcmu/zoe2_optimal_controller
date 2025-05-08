@@ -20,6 +20,7 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 RigidBodyDynamics = "366cf18f-59d5-5db9-a4de-86a9f6786172"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Trapz = "592b5752-818d-11e9-1e9a-2b8ca4a44cd1"
+lazy_nlp_qd = "ecc97b5a-e494-4383-ae61-46982ceb46b3"
 
 [compat]
 Ipopt = "1.7.3"
